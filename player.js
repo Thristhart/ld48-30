@@ -1,5 +1,5 @@
-var playerX = 256;
-var playerY = 256;
+var playerX = 0;
+var playerY = 0;
 var playerAngle = 0;
 var playerWidth = 10;
 var playerHeight = 20;
@@ -10,6 +10,7 @@ var playerTurnThrust = 0;
 var playerTurnrate = 0.05;
 var playerAccel = 0.05;
 var playerColliding = false;
+var drawCursor = false;
 
 var VELOCITY_CAP = 5
 function updatePlayer() {

@@ -22,7 +22,8 @@ function render() {
   for(var i = 0; i < planets.length; i++) {
     drawPlanet(planets[i]);
   }
-  drawAimingCursor();
+  if(drawCursor)
+    drawAimingCursor();
   drawPlayer();
   
   // reset translations and scaling
@@ -38,7 +39,6 @@ function render() {
 }
 
 function drawAimingCursor() {
-  
   
   var cursor_width = 0.5
   var cursor_radius = 0.7
@@ -73,7 +73,8 @@ function drawPlayer() {
   context.lineTo(botRight.x, botRight.y)
   context.lineTo(botLeft.x, botLeft.y)
   context.closePath()
-  context.stroke()
+  context.fillStyle = "#8f5715"
+  context.fill()
   
   if(playerThrust) {
     context.beginPath()
