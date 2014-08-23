@@ -16,10 +16,12 @@ var orbitPlanet = null;
 var orbitAngle = null;
 var orbitGraduator = 30;
 var orbitDirection = 1;
+var playerInventory = []
 
 var VELOCITY_CAP = 5
 function updatePlayer() {
   if(orbitPlanet && !playerThrust) {
+    cameraTarget = orbitPlanet
     playerVelocityX = 0
     playerVelocityY = 0
     var dx = playerX - orbitPlanet.x;
@@ -50,8 +52,11 @@ function updatePlayer() {
     playerY = orbitPlanet.y + Math.sin(orbitAngle) * (currentDistance + diff);
   }
   else {
+    if(orbitPlanet)
+      cameraReturning = true
     orbitPlanet = null
     orbitAngle = null
+    cameraTarget = null
     playerAngle += playerTurnrate * playerTurnThrust
     playerVelocityX += Math.cos(playerAngle) * playerThrust * playerAccel
     playerVelocityY += Math.sin(playerAngle) * playerThrust * playerAccel
@@ -71,8 +76,6 @@ function updatePlayer() {
       playerX += playerVelocityX
       playerY += playerVelocityY
     }
-    
-    checkForCollisions()
   }
   while(playerAngle > Math.PI * 2)
     playerAngle -= Math.PI * 2
@@ -84,32 +87,10 @@ function updatePlayer() {
     orbitAngle += Math.PI * 2
 }
 
-function checkForCollisions() {
-  playerColliding = false
-  for(var i = 0; i < planets.length; i++) {
-    checkPlanetCollision(planets[i])
+function playerHasResource(res) {
+  for(var i = 0; i < playerInventory.length; i++) {
+    if(playerInventory[i] == res)
+      return true
   }
-}
-
-function checkPlanetCollision(planet) {
-  var dx = planet.x - playerX
-  var dy = planet.y - playerY
-  var dxsquared = dx * dx
-  var dysquared = dy * dy
-  var collide_radius = planet.radius + playerHeight/2
-  var orbit_radius = planet.radius + playerHeight
-  if(dxsquared + dysquared < orbit_radius * orbit_radius) {
-    if(!orbitPlanet)
-    {
-      orbitPlanet = planet
-      var angleToPlanet = Math.atan2(dy, dx);
-      if(angleToPlanet < playerAngle) orbitDirection = -1;
-      else orbitDirection = 1;
-    }
-    if(dxsquared + dysquared < collide_radius * collide_radius)
-      playerColliding = true
-  }
-}
-
-function dampenVelocity() {
+  return false
 }

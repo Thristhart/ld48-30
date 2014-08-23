@@ -5,6 +5,7 @@ var cameraY = 256
 var cameraScale = 1
 var additionalX = 0
 var halfCanvas = 256
+var pauseRender = false
 
 var lastFrameTime = new Date().getTime()
 function render() {
@@ -19,17 +20,24 @@ function render() {
   context.scale(cameraScale, cameraScale);
   
   // draw stuff
-  for(var i = 0; i < planets.length; i++) {
-    drawPlanet(planets[i]);
+  var playerCell = positionToGridCell(playerX, playerY);
+  var neighbors = gridNeighbors(playerCell)
+  drawGrid(playerCell);
+  for(var i = 0; i < neighbors.length; i++) {
+    drawGrid(neighbors[i]);
+  }
+  if(orbitPlanet) {
+    drawDialog(orbitPlanet.message, 
+              orbitPlanet.x + orbitPlanet.radius/2, 
+              orbitPlanet.y - orbitPlanet.radius/2,
+              {font: "Segoe UI",
+               width: orbitPlanet.radius/3,
+               height: orbitPlanet.radius/4,})
   }
   if(drawCursor)
     drawAimingCursor();
   drawPlayer();
-  if(orbitPlanet)
-    drawDialog("Hello!", 
-              orbitPlanet.x + orbitPlanet.radius/2, 
-              orbitPlanet.y - orbitPlanet.radius/2,
-              {font: "20px Segoe UI", xOffset:-25, yOffset: -5})
+  drawChatWheel()
   // reset translations and scaling
   context.restore()
   
@@ -39,7 +47,19 @@ function render() {
   context.fillStyle = "white";
   context.fillText(fps, halfCanvas * 2 - 20, 20);
   lastFrameTime = new Date().getTime();
-  window.requestAnimationFrame(render);
+  if(pauseRender)
+    return
+  else
+    window.requestAnimationFrame(render);
+}
+
+function drawGrid(cell) {
+  for(var i = 0; i < cell.planets.length; i++) {
+    drawPlanet(cell.planets[i])
+  }
+  for(var i = 0; i < cell.npcs.length; i++) {
+    drawNPC(cell.npcs[i])
+  }
 }
 
 function drawAimingCursor() {
@@ -71,13 +91,15 @@ function drawPlayer() {
   var botRight = pointInRect(playerX, playerY, playerAngle, playerHeight, playerWidth, 1, 1)
   
   // draw rectangular shape
+  context.fillStyle = "#8f5715";
+  context.strokeStyle = "#8f5715";
   context.beginPath()
   context.moveTo(topLeft.x, topLeft.y)
   context.lineTo(topRight.x, topRight.y)
   context.lineTo(botRight.x, botRight.y)
   context.lineTo(botLeft.x, botLeft.y)
   context.closePath()
-  context.fillStyle = "#8f5715"
+  context.stroke()
   context.fill()
   
   if(playerThrust) {
@@ -88,32 +110,81 @@ function drawPlayer() {
     context.closePath()
     context.fillStyle = "red"
     context.fill()
-    context.stroke()
   }
 }
-
+function drawNPC(npc) {
+  var topLeft = pointInRect(npc.x, npc.y, npc.angle, npc.height, npc.width, 0, 0)
+  var topRight = pointInRect(npc.x, npc.y, npc.angle, npc.height, npc.width, 1, 0)
+  var botLeft = pointInRect(npc.x, npc.y, npc.angle, npc.height, npc.width, 0, 1)
+  var botRight = pointInRect(npc.x, npc.y, npc.angle, npc.height, npc.width, 1, 1)
+  
+  // draw rectangular shape
+  context.fillStyle = npc.color;
+  context.strokeStyle = npc.color;
+  context.beginPath()
+  context.moveTo(topLeft.x, topLeft.y)
+  context.lineTo(topRight.x, topRight.y)
+  context.lineTo(botRight.x, botRight.y)
+  context.lineTo(botLeft.x, botLeft.y)
+  context.closePath()
+  context.stroke()
+  context.fill()
+  
+  if(npc.thrust) {
+    context.beginPath()
+    context.moveTo(botLeft.x, botLeft.y)
+    context.lineTo(npc.x - Math.cos(npc.angle) * 20, npc.y - Math.sin(npc.angle) * 20)
+    context.lineTo(topLeft.x, topLeft.y)
+    context.closePath()
+    context.fillStyle = "red"
+    context.fill()
+  }
+}
+var testFont = null
 function drawDialog(text, tailX, tailY, style) {
   var textOffsetX = 0
   var textOffsetY = 0
+  var width = 50
+  var height = 40
   if(style) {
-    context.font = style.font
     textOffsetX = style.xOffset
     textOffsetY = style.yOffset
+    if(style.width) width = style.width;
+    if(style.height) height = style.height;
+    context.font = width / 3 + "px " + style.font
   }
-  var x = tailX + 50
-  var y = tailY - 50
+  var lines = text.split("\n")
+  var textWidth = 0
+  for(var i = 0; i < lines.length; i++) {
+    w = context.measureText(lines[i]).width
+    if(w > textWidth)
+      textWidth = w
+  }
+  width = textWidth / 1.5
+  if(height < 20) height = 20
+  if(width < 40) width = 40
+  var x = tailX + width
+  var y = tailY - height
   context.beginPath();
-  context.moveTo(x,y - 50);
-  context.quadraticCurveTo(x - 50, y - 50, x - 50, y - 2.5);
-  context.quadraticCurveTo(x - 50, y + 25, x - 25, y + 25);
-  context.quadraticCurveTo(x - 25, y + 45, x - 45, y + 50);
-  context.quadraticCurveTo(x - 15, y + 45, x - 10, y + 25);
-  context.quadraticCurveTo(x + 50, y + 25, x + 50, y - 12.5);
-  context.quadraticCurveTo(x + 50, y - 50, x     , y - 50);
-  context.fillStyle = "white"
+  context.moveTo(x,y - height);
+  context.quadraticCurveTo(x - width, y - height,
+                           x - width, y - 2.5);
+  context.quadraticCurveTo(x - width, y + height/2,
+                           x - width/2, y + height/2);
+  context.quadraticCurveTo(x - width/2, y + height - 5,
+                           x - width - 5, y + height);
+  context.quadraticCurveTo(x - width/3, y + height - 5,
+                           x - width/5, y + height/2);
+  context.quadraticCurveTo(x + width, y + height/2,
+                           x + width, y - height/4);
+  context.quadraticCurveTo(x + width, y - height,
+                           x     , y - height);
+  context.fillStyle = "white";
   context.fill();
-  context.fillStyle = "black"
-  context.fillText(text, x + textOffsetX, y + textOffsetY);  
+  context.fillStyle = "black";
+  for(var i = 0; i < lines.length; i++) {
+    context.fillText(lines[i], x - textWidth / 2, (y - (lines.length * 15/2)) + i * 15);  
+  }
 }
 
 function pointInRect(rx, ry, angle, width, height, p_x, p_y) {
@@ -144,6 +215,10 @@ function drawPlanet(planet) {
   context.arc(planet.x, planet.y, planet.radius, 0, Math.PI * 2, true);
   context.closePath()
   context.fill()
+  context.fillStyle = "white";
+  context.font = 20 / cameraScale + "pt Arial"
+  var width = context.measureText(planet.name).width
+  context.fillText(planet.name, planet.x - width / 2, planet.y);  
 }
 
 function clear() {
