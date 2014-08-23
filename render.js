@@ -25,7 +25,11 @@ function render() {
   if(drawCursor)
     drawAimingCursor();
   drawPlayer();
-  
+  if(orbitPlanet)
+    drawDialog("Hello!", 
+              orbitPlanet.x + orbitPlanet.radius/2, 
+              orbitPlanet.y - orbitPlanet.radius/2,
+              {font: "20px Segoe UI", xOffset:-25, yOffset: -5})
   // reset translations and scaling
   context.restore()
   
@@ -86,6 +90,30 @@ function drawPlayer() {
     context.fill()
     context.stroke()
   }
+}
+
+function drawDialog(text, tailX, tailY, style) {
+  var textOffsetX = 0
+  var textOffsetY = 0
+  if(style) {
+    context.font = style.font
+    textOffsetX = style.xOffset
+    textOffsetY = style.yOffset
+  }
+  var x = tailX + 50
+  var y = tailY - 50
+  context.beginPath();
+  context.moveTo(x,y - 50);
+  context.quadraticCurveTo(x - 50, y - 50, x - 50, y - 2.5);
+  context.quadraticCurveTo(x - 50, y + 25, x - 25, y + 25);
+  context.quadraticCurveTo(x - 25, y + 45, x - 45, y + 50);
+  context.quadraticCurveTo(x - 15, y + 45, x - 10, y + 25);
+  context.quadraticCurveTo(x + 50, y + 25, x + 50, y - 12.5);
+  context.quadraticCurveTo(x + 50, y - 50, x     , y - 50);
+  context.fillStyle = "white"
+  context.fill();
+  context.fillStyle = "black"
+  context.fillText(text, x + textOffsetX, y + textOffsetY);  
 }
 
 function pointInRect(rx, ry, angle, width, height, p_x, p_y) {
