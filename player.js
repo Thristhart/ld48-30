@@ -16,7 +16,8 @@ var orbitPlanet = null;
 var orbitAngle = null;
 var orbitGraduator = 30;
 var orbitDirection = 1;
-var playerInventory = []
+var playerInventory = [];
+var quest;
 
 var VELOCITY_CAP = 5
 function updatePlayer() {
@@ -52,8 +53,10 @@ function updatePlayer() {
     playerY = orbitPlanet.y + Math.sin(orbitAngle) * (currentDistance + diff);
   }
   else {
-    if(orbitPlanet)
+    if(orbitPlanet) {
       cameraReturning = true
+      playerLeftOrbit()
+    }
     orbitPlanet = null
     orbitAngle = null
     cameraTarget = null
@@ -87,10 +90,21 @@ function updatePlayer() {
     orbitAngle += Math.PI * 2
 }
 
-function playerHasResource(res) {
+function playerHasResource(res, count) {
+  count = count || 1;
+  var amount = 0
   for(var i = 0; i < playerInventory.length; i++) {
     if(playerInventory[i] == res)
-      return true
+      amount++
   }
-  return false
+  return amount >= count;
+}
+
+function playerLeftOrbit() {
+  if(orbitPlanet == playerHome) {
+    if(!playerHasResource(playerHome.resource)) {
+      playerInventory.push(playerHome.resource);
+      updateInventory();
+    }
+  }
 }

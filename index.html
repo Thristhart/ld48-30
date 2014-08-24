@@ -13,6 +13,12 @@
     <script src="input.js"></script>
   </head>
   <body>
+    <img id="bg" src="starfield.png" />
+    <form id="startingPlanet" onsubmit="return buildStartingPlanet()" onreset="planetName.value = generatePlanetName(); return false">
+      <input id="planetName" value="Test" autofocus />
+      <input id="reroll" value="Reroll" type="reset" />
+      <input id="go" value="Start" type="submit" />
+    </form>
     <canvas id="display" width=512 height=512>
       
     </canvas>
@@ -23,10 +29,13 @@
     </canvas>
     <div id="status">
       <span id="coords">
-        <span id="x">0</span>
         <span id="seperator">,</span>
+        <span id="x">0</span>
         <span id="y">0</span>
       </span>
     </div>
+    <ul id="quest">
+      
+    </ul>
   </body>
 </html>

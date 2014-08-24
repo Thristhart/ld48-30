@@ -8,6 +8,7 @@ var cameraScale = 1
 var additionalX = 0
 var halfCanvas = 256
 var pauseRender = false
+var background = null
 
 var lastFrameTime = new Date().getTime()
 function render() {
@@ -21,10 +22,14 @@ function render() {
                     halfCanvas - cameraY * cameraScale)
   context.scale(cameraScale, cameraScale);
   
+  
   // draw stuff
   var playerCell = positionToGridCell(playerX, playerY);
-  var neighbors = gridNeighbors(playerCell)
-  drawGrid(playerCell);
+  var neighbors = gridNeighbors(playerCell).concat(playerCell)
+  for(var i = 0; i < neighbors.length; i++) {
+    var cell = neighbors[i];
+    context.drawImage(background, cell.x, cell.y, GRID_CELL_SIZE, GRID_CELL_SIZE); 
+  }
   for(var i = 0; i < neighbors.length; i++) {
     drawGrid(neighbors[i]);
   }
@@ -40,6 +45,15 @@ function render() {
     drawAimingCursor();
   drawPlayer();
   drawChatWheel()
+  
+  
+  if(playerInventory.length == 0) {
+    drawDialog("I've run out of resources! I should head home for more.", 
+              playerX, playerY,{font: "Segoe UI",
+               width: (playerHeight * 4) / cameraScale,
+               height: (playerHeight * 4) / cameraScale});
+  }
+  
   // reset translations and scaling
   context.restore()
   
@@ -58,19 +72,21 @@ function render() {
 
 function updateInventory() {
   var inv_dom = document.getElementById("inventory")
+  inv_dom.innerHTML = ""
   for(var i = 0; i < playerInventory.length; i++) {
     var li = document.createElement("li")
     li.innerHTML = playerInventory[i].name
+    li.className = "item_" + playerInventory[i].name;
     inv_dom.appendChild(li)
   }
 }
 
 function drawGrid(cell) {
-  for(var i = 0; i < cell.planets.length; i++) {
-    drawPlanet(cell.planets[i])
-  }
   for(var i = 0; i < cell.npcs.length; i++) {
     drawNPC(cell.npcs[i])
+  }
+  for(var i = 0; i < cell.planets.length; i++) {
+    drawPlanet(cell.planets[i])
   }
 }
 
@@ -103,8 +119,8 @@ function drawPlayer() {
   var botRight = pointInRect(playerX, playerY, playerAngle, playerHeight, playerWidth, 1, 1)
   
   // draw rectangular shape
-  context.fillStyle = "#8f5715";
-  context.strokeStyle = "#8f5715";
+  context.fillStyle = "#C7CBD1";
+  context.strokeStyle = "#C7CBD1";
   context.beginPath()
   context.moveTo(topLeft.x, topLeft.y)
   context.lineTo(topRight.x, topRight.y)
@@ -117,7 +133,7 @@ function drawPlayer() {
   
   var miniX = (playerX - cameraX)/16 + 64;
   var miniY = (playerY - cameraY)/16 + 64;
-  minimapContext.strokeStyle = "#8f5715";
+  minimapContext.strokeStyle = "#C7CBD1";
   minimapContext.lineWidth = 3;
   minimapContext.beginPath()
   minimapContext.moveTo(miniX, miniY);
@@ -177,7 +193,7 @@ function drawDialog(text, tailX, tailY, style) {
     if(style.height) height = style.height;
     context.font = width / 3 + "px " + style.font
   }
-  var lines = text.split("\n")
+  var lines = wordWrap(text, style.width * 4)
   var textWidth = 0
   for(var i = 0; i < lines.length; i++) {
     w = context.measureText(lines[i]).width
@@ -185,7 +201,7 @@ function drawDialog(text, tailX, tailY, style) {
       textWidth = w
   }
   width = textWidth / 1.5
-  height = lines.length * 15
+  height = lines.length * 12
   if(height < 20) height = 20
   if(width < 40) width = 40
   var x = tailX + width
@@ -208,8 +224,27 @@ function drawDialog(text, tailX, tailY, style) {
   context.fill();
   context.fillStyle = "black";
   for(var i = 0; i < lines.length; i++) {
-    context.fillText(lines[i], x - textWidth / 2, (y - (lines.length * 10)/2) + i * 15);  
+    context.fillText(lines[i], x - textWidth / 2, (y - (lines.length * 10)/2) + i * 10);  
   }
+}
+function wordWrap(string, maxLength) {
+  var lines = []
+  while(string.length) {
+    for(var i = string.length; context.measureText(string.substr(0, i)).width > maxLength; i--);
+    
+    var currentLine = string.substr(0, i);
+    var spaceIndex = 0;
+    if(i != string.length) {
+      for(spaceIndex = 0; currentLine.indexOf(" ", spaceIndex) != -1; spaceIndex = currentLine.indexOf(" ", spaceIndex)+1);
+    }
+    if(spaceIndex) {
+      currentLine = currentLine.substr(0, spaceIndex);
+    }
+    lines = lines.concat(currentLine.split("\n"))
+    
+    string = string.substr(currentLine.length, string.length);
+  }
+  return lines
 }
 
 function pointInRect(rx, ry, angle, width, height, p_x, p_y) {

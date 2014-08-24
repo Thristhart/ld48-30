@@ -1,5 +1,5 @@
 body {
-  background-color: #965800;
+  background-color: #2C3844;
   margin: 0;
 }
 #display {
@@ -16,13 +16,18 @@ body {
   margin-top: 2em;
   background-color: black;
   border-radius: 5em;
-  border: 7px solid #3a2200;
+  border: 3px solid #FF4200;
+}
+#bg {
+  display: none;
 }
 #status {
   font-family: Monospace;
 }
 #seperator,#x,#y {
   position: absolute;
+  background-color: #C7CBD1;
+  color: #2C3844;
 }
 #seperator {
   top: calc(128px + 4em);
@@ -50,22 +55,57 @@ body {
   
   padding: 0;
   list-style-type: none;
-  background-color: #d47d00;
-  color: #3a2200;
   height: 15em;
 }
-#inventory li:first-child {
-  border-top: 4px solid #3a2200;
+#inventory li:first-child, #quest li:first-child {
+  border-top: 4px solid #2C3844;
 }
 #inventory::before {
   content: "INVENTORY";
   font-weight: bold;
+  text-align: center;
+  width: 100%;
+  display: block;
 }
 
-#inventory li {
-  border-bottom: 4px solid #3a2200;
+#inventory li, #quest li {
+  border-bottom: 4px solid #2C3844;
   width: 100%;
   text-transform: uppercase;
   height: 3em;
   line-height: 3em;
+}
+#quest {
+  position: absolute;
+  left: calc(50% + 256px + 2em);
+  top: calc(128px + 6em);
+  width: 6.5em;
+  
+  padding: 0;
+  list-style-type: none;
+  height: 15em;
+}
+#quest, #inventory {
+  background-color: #C7CBD1;
+  color: #2C3844;
+  border-radius: 1em;
+  padding-top: 0.5em;
+}
+#quest::before {
+  content: "QUEST";
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
+#startingPlanet {
+  position: absolute;
+  left: calc(50% - 5em);
+  top: 256px;
+  width: 10em;
+}
+#startingPlanet::before {
+  content: "Name your homeworld: ";
+  color: white;
 }

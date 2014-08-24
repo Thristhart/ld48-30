@@ -2,7 +2,6 @@ planets = []
 function addPlanet(x, y, name) {
   var planet = {x:x, y:y, radius: 0}
   planet.message = "Hello!"
-  planet.want = resources.gems
   planet.menu = MENU_HELLO
   if(name)
     planet.name = name
@@ -15,10 +14,36 @@ function addPlanet(x, y, name) {
   planet.personality.wealth = Math.abs(planet.personality.hash << 2) % 10
   planet.personality.friendliness = Math.abs(planet.personality.hash << 3) % 10
   planet.personality.flavor_angle = Math.abs(planet.personality.hash) % (Math.PI * 2)
+  if(Math.abs(planet.personality.flavor_angle - Math.PI / 2 + Math.PI / 4) < 0.2)
+    planet.personality.flavor_angle += Math.PI / 4
   
   planet.radius = MINIMUM_PLANET_RADIUS + (Math.abs(planet.personality.hash) % (MAXIMUM_PLANET_RADIUS - MINIMUM_PLANET_RADIUS))
   planet.color = generateRandomColor(20, 20, 20, planet.personality.hash)
   planet.resource = getPlanetResource(planet)
+  planet.want = getPlanetDesiredResource(planet)
+  var generosity = (planet.personality.friendliness + planet.personality.wealth) - 10;
+  var theirValue = (planet.want.value + generosity) * (planet.radius * planet.want.massBias);
+  var myValue = (planet.resource.value * planet.resource.massBias * planet.radius);
+  planet.tradeRatio = myValue / theirValue
+  planet.tradeRatio = planet.tradeRatio.clamp(0.33, 3)
+  if(planet.tradeRatio < 1)
+  {
+    planet.tradeOffer = 2
+    planet.tradeDemand = Math.round(planet.tradeOffer / planet.tradeRatio)
+    if(planet.tradeDemand > 3) {
+      planet.tradeOffer = 1
+      planet.tradeDemand = Math.round(planet.tradeOffer / planet.tradeRatio)    
+    }
+  }
+  else {
+    planet.tradeDemand = 2
+    planet.tradeOffer = Math.round(planet.tradeDemand * planet.tradeRatio)
+    if(planet.tradeOffer > 3) {
+      planet.tradeDemand = 1
+      planet.tradeOffer = Math.round(planet.tradeDemand * planet.tradeRatio)
+    }
+  }
+  planet.gossipCount = 0;
   
   planet.type = "industrial"
   
@@ -28,10 +53,14 @@ function addPlanet(x, y, name) {
   planets.push(planet)
   return planet
 }
+// fuck it
+Number.prototype.clamp = function(min, max) {
+  return Math.min(Math.max(this, min), max);
+};
 
 function generatePlanetName() {
   var titles = ["Empire", "Republic", "Land", "World", "Hub"]
-  var adjectives = ["Alpha", "Beta", "Gamma", "Omega", "Prime", "Ver", "Dar", "New", "Great", "Greater", "Old", "Lesser", "Small", "Holy", "Dwarf", "Chunky"]
+  var adjectives = ["Alpha", "Beta", "Gamma", "Omega", "Prime", "Ver", "Dar", "New", "Great", "Greater", "Old", "Lesser", "Small", "Holy", "Dwarf"]
   var prefixes = ["Andro", "Ev", "Raz", "Zyr", "Ho", "Ad", "Ab", "Ala", "Ari", "Lat", "Kal", "Heg", "Syn", "Gar", "Arra", "Robo", "Siri", "Plut", "Satu", "Neptu", "Mercu", "Jupi", "Terr", "Termi", "Trant", "Cala", "Tato", "Sar", "Hac", "Sah", "Rev", "Vor", "As", "Ath", "Demi", "Bel", "Hal", "Jen"]
   var suffixes = ["meda", "zle", "yar", "yos", "dos", "ora", "zon", "mak", "ona", "ia", "arr", "ganda", "world", "dan", "van", "us", "y", "u", "o", "e", "a", "i", "ar", "rn", "ne", "oine", "ine", "ry", "iter", "nus", "fia", "or", "land", "gar", "alus", "lon", "th"]
   
