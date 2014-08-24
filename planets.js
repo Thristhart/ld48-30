@@ -1,21 +1,39 @@
 planets = []
-function addPlanet(x, y, size) {
-  var planet = {x:x, y:y, radius: size}
-  planet.color = generateRandomColor(20, 20, 20)
+function addPlanet(x, y, name) {
+  var planet = {x:x, y:y, radius: 0}
   planet.message = "Hello!"
-  planet.resource = getPlanetResource(planet)
   planet.want = resources.gems
   planet.menu = MENU_HELLO
-  planet.name = generatePlanetName()
+  if(name)
+    planet.name = name
+  else
+    planet.name = generatePlanetName()
+  
+  planet.personality = {}
+  planet.personality.hash = hashString(planet.name)
+  planet.personality.aggression = Math.abs(planet.personality.hash) % 10
+  planet.personality.wealth = Math.abs(planet.personality.hash << 2) % 10
+  planet.personality.friendliness = Math.abs(planet.personality.hash << 3) % 10
+  planet.personality.flavor_angle = Math.abs(planet.personality.hash) % (Math.PI * 2)
+  
+  planet.radius = MINIMUM_PLANET_RADIUS + (Math.abs(planet.personality.hash) % (MAXIMUM_PLANET_RADIUS - MINIMUM_PLANET_RADIUS))
+  planet.color = generateRandomColor(20, 20, 20, planet.personality.hash)
+  planet.resource = getPlanetResource(planet)
+  
+  planet.type = "industrial"
+  
+  if(planet.personality.friendliness > 7 || planet.personality.aggression > 7 || planet.personality.wealth > 7)
+    buildNPC(planet.x - planet.personality.friendliness, planet.y)
+  
   planets.push(planet)
   return planet
 }
 
 function generatePlanetName() {
-  var titles = ["Empire", "Republic", "Land", "World", "Hub", "Planet"]
-  var adjectives = ["Alpha", "Beta", "Gamma", "Omega", "New", "Great", "Greater", "Old", "Lesser", "Small", "Holy", "Dwarf"]
-  var prefixes = ["Andro", "Heg", "Syn", "Gar", "Arra", "Robo", "Siri", "Plut", "Satu", "Neptu", "Mercu", "Jupi", "Terr", "Termi", "Trant", "Cala", "Tatoo"]
-  var suffixes = ["meda", "yar", "arr", "ganda", "world", "dan", "van", "us", "o", "e", "a", "i", "rn", "ne", "ine", "ry", "iter", "nus", "fia", "or"]
+  var titles = ["Empire", "Republic", "Land", "World", "Hub"]
+  var adjectives = ["Alpha", "Beta", "Gamma", "Omega", "Prime", "Ver", "Dar", "New", "Great", "Greater", "Old", "Lesser", "Small", "Holy", "Dwarf", "Chunky"]
+  var prefixes = ["Andro", "Ev", "Raz", "Zyr", "Ho", "Ad", "Ab", "Ala", "Ari", "Lat", "Kal", "Heg", "Syn", "Gar", "Arra", "Robo", "Siri", "Plut", "Satu", "Neptu", "Mercu", "Jupi", "Terr", "Termi", "Trant", "Cala", "Tato", "Sar", "Hac", "Sah", "Rev", "Vor", "As", "Ath", "Demi", "Bel", "Hal", "Jen"]
+  var suffixes = ["meda", "zle", "yar", "yos", "dos", "ora", "zon", "mak", "ona", "ia", "arr", "ganda", "world", "dan", "van", "us", "y", "u", "o", "e", "a", "i", "ar", "rn", "ne", "oine", "ine", "ry", "iter", "nus", "fia", "or", "land", "gar", "alus", "lon", "th"]
   
   var name = ""
   var title_rand = Math.random() * 10
@@ -34,6 +52,14 @@ function generatePlanetName() {
 }
 function selectA(array) {
   return array[Math.floor(array.length * Math.random())]
+}
+function hashString(string) {
+  var hash = 0;
+  for(var i = 0; i < string.length; i++) {
+    c = string.charCodeAt(i);
+    hash = ((hash << 5) - hash) + c
+  }
+  return hash
 }
 
 var MINIMUM_SPACE_BETWEEN_PLANETS = 100
@@ -99,8 +125,7 @@ function generatePlanetsInCell(cell) {
   var planetCount = Math.ceil(Math.random() * GRID_CELL_MAX_PLANETS)
   for(var i = 0; i < planetCount; i++) {
     var p = addPlanet(cell.x + Math.random() * GRID_CELL_SIZE,
-                      cell.y + Math.random() * GRID_CELL_SIZE,
-                      MINIMUM_PLANET_RADIUS + Math.random() * MAXIMUM_PLANET_RADIUS);
+                      cell.y + Math.random() * GRID_CELL_SIZE)
     checkPlanetForCollision(p)
     cell.planets.push(p)
   }

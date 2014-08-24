@@ -1,5 +1,7 @@
 var canvas;
 var context;
+var minimapCanvas;
+var minimapContext;
 var cameraX = 256
 var cameraY = 256
 var cameraScale = 1
@@ -28,8 +30,8 @@ function render() {
   }
   if(orbitPlanet) {
     drawDialog(orbitPlanet.message, 
-              orbitPlanet.x + orbitPlanet.radius/2, 
-              orbitPlanet.y - orbitPlanet.radius/2,
+              orbitPlanet.x - orbitPlanet.radius * 0.7,
+              orbitPlanet.y + orbitPlanet.radius * 0.7,
               {font: "Segoe UI",
                width: orbitPlanet.radius/3,
                height: orbitPlanet.radius/4,})
@@ -41,6 +43,7 @@ function render() {
   // reset translations and scaling
   context.restore()
   
+  
   var nowTime = new Date().getTime()
   var fps = 1000/(nowTime - lastFrameTime);
   fps = Math.floor(fps)
@@ -51,6 +54,15 @@ function render() {
     return
   else
     window.requestAnimationFrame(render);
+}
+
+function updateInventory() {
+  var inv_dom = document.getElementById("inventory")
+  for(var i = 0; i < playerInventory.length; i++) {
+    var li = document.createElement("li")
+    li.innerHTML = playerInventory[i].name
+    inv_dom.appendChild(li)
+  }
 }
 
 function drawGrid(cell) {
@@ -101,6 +113,18 @@ function drawPlayer() {
   context.closePath()
   context.stroke()
   context.fill()
+  
+  
+  var miniX = (playerX - cameraX)/16 + 64;
+  var miniY = (playerY - cameraY)/16 + 64;
+  minimapContext.strokeStyle = "#8f5715";
+  minimapContext.lineWidth = 3;
+  minimapContext.beginPath()
+  minimapContext.moveTo(miniX, miniY);
+  minimapContext.lineTo(miniX + Math.cos(playerAngle) * 5, miniY + Math.sin(playerAngle) * 5)
+  minimapContext.closePath()
+  minimapContext.stroke()
+  
   
   if(playerThrust) {
     context.beginPath()
@@ -161,6 +185,7 @@ function drawDialog(text, tailX, tailY, style) {
       textWidth = w
   }
   width = textWidth / 1.5
+  height = lines.length * 15
   if(height < 20) height = 20
   if(width < 40) width = 40
   var x = tailX + width
@@ -183,7 +208,7 @@ function drawDialog(text, tailX, tailY, style) {
   context.fill();
   context.fillStyle = "black";
   for(var i = 0; i < lines.length; i++) {
-    context.fillText(lines[i], x - textWidth / 2, (y - (lines.length * 15/2)) + i * 15);  
+    context.fillText(lines[i], x - textWidth / 2, (y - (lines.length * 10)/2) + i * 15);  
   }
 }
 
@@ -215,7 +240,123 @@ function drawPlanet(planet) {
   context.arc(planet.x, planet.y, planet.radius, 0, Math.PI * 2, true);
   context.closePath()
   context.fill()
+  
+  minimapContext.fillStyle = planet.color
+  var miniX = (planet.x - cameraX)/16 + 64;
+  var miniY = (planet.y - cameraY)/16 + 64;
+  minimapContext.moveTo(miniX, miniY);
+  minimapContext.beginPath()
+  minimapContext.arc(miniX, miniY, planet.radius/16, 0, Math.PI * 2, true);
+  minimapContext.closePath()
+  minimapContext.fill()
+  
+  var antenna_angle = Math.PI / 2 + Math.PI / 4
+  var ax = planet.x + Math.cos(antenna_angle) * planet.radius
+  var ay = planet.y + Math.sin(antenna_angle) * planet.radius
+  
+  var topaX = ax + Math.cos(antenna_angle) * 20
+  var topaY = ay + Math.sin(antenna_angle) * 20
+  
+  var leftCornerX = ax + Math.cos(antenna_angle + Math.PI / 2) * 5
+  var leftCornerY = ay + Math.sin(antenna_angle + Math.PI / 2) * 5
+  
+  var rightCornerX = ax + Math.cos(antenna_angle - Math.PI / 2) * 5
+  var rightCornerY = ay + Math.sin(antenna_angle - Math.PI / 2) * 5
+  
+  var leftCornerToTop = Math.atan2(topaY - leftCornerY, topaX - leftCornerX)
+  var rightCornerToTop = Math.atan2(topaY - rightCornerY, topaX - rightCornerX)
+  var bar1leftX = leftCornerX + Math.cos(leftCornerToTop) * 5
+  var bar1leftY = leftCornerY + Math.sin(leftCornerToTop) * 5
+  var bar1rightX = rightCornerX + Math.cos(rightCornerToTop) * 5
+  var bar1rightY = rightCornerY + Math.sin(rightCornerToTop) * 5
+  var bar2leftX = leftCornerX + Math.cos(leftCornerToTop) * 10
+  var bar2leftY = leftCornerY + Math.sin(leftCornerToTop) * 10
+  var bar2rightX = rightCornerX + Math.cos(rightCornerToTop) * 10
+  var bar2rightY = rightCornerY + Math.sin(rightCornerToTop) * 10
+  context.beginPath()
+  context.moveTo(ax, ay)
+  context.moveTo(leftCornerX, leftCornerY)
+  context.lineTo(topaX, topaY)
+  context.lineTo(rightCornerX, rightCornerY)
+  context.moveTo(bar1leftX, bar1leftY)
+  context.lineTo(bar1rightX, bar1rightY)
+  context.moveTo(bar2leftX, bar2leftY)
+  context.lineTo(bar2rightX, bar2rightY)
+  context.closePath()
+  context.strokeStyle = "white"
   context.fillStyle = "white";
+  context.stroke()
+  
+  if(orbitPlanet == planet) {
+    context.moveTo(topaX, topaY)
+    var waves_angle = antenna_angle + Math.PI / 2
+    context.beginPath()
+    context.arc(topaX, topaY, 7, waves_angle - 1, waves_angle + 1)
+    context.stroke()
+    context.beginPath()
+    context.arc(topaX, topaY, 12, waves_angle - 1.1, waves_angle + 1.1)
+    context.stroke()
+    var waves_angle = antenna_angle - Math.PI / 2
+    context.beginPath()
+    context.arc(topaX, topaY, 7, waves_angle - 1, waves_angle + 1)
+    context.stroke()
+    context.beginPath()
+    context.arc(topaX, topaY, 12, waves_angle - 1.1, waves_angle + 1.1)
+    context.stroke()
+  }
+  
+  context.beginPath()
+  context.moveTo(topaX, topaY)
+  context.arc(topaX, topaY, 3, 0, Math.PI * 2)
+  context.closePath()
+  context.fill()
+  
+  if(planet.type == "industrial") {
+    var factory_angle = planet.personality.flavor_angle
+    var factory_x = planet.x + Math.cos(factory_angle) * planet.radius * 1.05
+    var factory_y = planet.y + Math.sin(factory_angle) * planet.radius * 1.05
+    var factory_width = planet.radius / 10
+    var factory_height = planet.radius / 5
+    var topLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, 0)
+    var topRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 1, 0)
+    var botLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, 1)
+    var botRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 1, 1)
+    var smokestackLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, -0.5)
+    var smokestackRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.2, -0.5)
+    var smokestackBotRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.2, 0)
+    
+    var smokeLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, -0.1, -1)
+    var smokeMiddle = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.15, -0.7)
+    var smokeMiddleTop = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.14, -1.3)
+    var smokeRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.1, -1.5)
+    var smokeMiddleTopmost = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, -0.1, -1.5)
+    
+    context.beginPath()
+    context.moveTo(topLeft.x, topLeft.y);
+    context.lineTo(topRight.x, topRight.y);
+    context.lineTo(botRight.x, botRight.y);
+    context.lineTo(botLeft.x, botLeft.y);
+    context.closePath()
+    context.fill()
+    context.beginPath()
+    context.moveTo(topLeft.x, topLeft.y);
+    context.lineTo(smokestackLeft.x, smokestackLeft.y)
+    context.lineTo(smokestackRight.x, smokestackRight.y)
+    context.lineTo(smokestackBotRight.x, smokestackBotRight.y)
+    context.closePath()
+    context.fill()
+    
+    context.beginPath()
+    //context.moveTo(smokeMiddle.x, smokeMiddle.y)
+    context.arc(smokeMiddle.x, smokeMiddle.y, planet.radius / 40, factory_angle, factory_angle - Math.PI, true)
+    //context.quadraticCurveTo(smokeLeft.x, smokeLeft.y, smokeMiddleTop.x, smokeMiddleTop.y)
+    //context.quadraticCurveTo(smokeRight.x, smokeRight.y, smokeMiddleTopmost.x, smokeMiddleTopmost.y)
+    context.stroke()
+    context.beginPath()
+    context.arc(smokeMiddleTop.x, smokeMiddleTop.y, planet.radius / 40, factory_angle, factory_angle + Math.PI, false)
+    context.stroke()
+  }
+  
   context.font = 20 / cameraScale + "pt Arial"
   var width = context.measureText(planet.name).width
   context.fillText(planet.name, planet.x - width / 2, planet.y);  
@@ -223,13 +364,21 @@ function drawPlanet(planet) {
 
 function clear() {
   context.clearRect(0, 0, canvas.width, canvas.height)
+  minimapContext.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height)
 }
 
-
-function generateRandomColor(mix_r, mix_g, mix_b) {
-  var red = Math.floor(Math.random() * 256);
-  var green = Math.floor(Math.random() * 256);
-  var blue = Math.floor(Math.random() * 256);
+// not actually a seed but don't tell anyone and I won't
+function generateRandomColor(mix_r, mix_g, mix_b, seed) {
+  if(!seed) {
+    var red = Math.floor(Math.random() * 256);
+    var green = Math.floor(Math.random() * 256);
+    var blue = Math.floor(Math.random() * 256);
+  }
+  else {
+    var red = Math.floor(Math.abs(seed) % 256);
+    var green = Math.floor(Math.abs(seed << 2) % 256);
+    var blue = Math.floor(Math.abs(seed << 3) % 256);
+  }
   if(mix_r && mix_g && mix_b) {
     red = Math.floor((red + mix_r) / 2);
     green = Math.floor((green + mix_g) / 2);

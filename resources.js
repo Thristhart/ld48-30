@@ -43,6 +43,6 @@ function getPlanetResource(planet) {
       resArray.push(rtypes[i])
     }
   }
-  var index = Math.floor(Math.random() * resArray.length)
+  var index = Math.abs(planet.personality.hash) % resArray.length
   return resources[resArray[index]]
 }

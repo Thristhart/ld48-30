@@ -1,5 +1,5 @@
 var gridCells = []
-var GRID_CELL_SIZE = 800
+var GRID_CELL_SIZE = 1000
 var GRID_CELL_MAX_PLANETS = 1
 function positionToGridCell(x, y) {
   var gridX = Math.floor(x / GRID_CELL_SIZE)

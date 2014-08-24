@@ -88,7 +88,7 @@ function translateMousePosition(x, y) {
 function onMouseDown(event) {
   if(!hasPointerLock())
     canvas.requestPointerLock()
-  if(orbitPlanet && selectedChat) {
+  if(orbitPlanet && selectedChat && !orbitPlanet.messageQueue) {
     selectedChat.clicked()
   }
 }

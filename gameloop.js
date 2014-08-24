@@ -1,5 +1,5 @@
-var CAMERA_SPEED = 3
-var CAMERA_SCALE_SPEED = 0.01
+var CAMERA_SPEED = 3.2
+var CAMERA_SCALE_SPEED = 0.007
 var camMoveVector = {x: 0, y: 0}
 var cameraReturning = false
 function update() {
@@ -45,11 +45,13 @@ function update() {
       var cDx = playerX - cameraX
       var cDy = playerY - cameraY
       var cAngle = Math.atan2(cDy, cDx)
-      if(Math.abs(cDx) > CAMERA_SPEED*2 || Math.abs(cDy) > CAMERA_SPEED*2) {
-        cameraX += Math.cos(cAngle) * CAMERA_SPEED * 2
-        cameraY += Math.sin(cAngle) * CAMERA_SPEED * 2
+      if(Math.abs(cDx) > CAMERA_SPEED*1.5 || Math.abs(cDy) > CAMERA_SPEED*1.5) {
+        cameraX += Math.cos(cAngle) * CAMERA_SPEED * 1.5
+        cameraY += Math.sin(cAngle) * CAMERA_SPEED * 1.5
       }
       else {
+        cameraX = playerX
+        cameraY = playerY
         doneMove = true
       }
       if(doneScale && doneMove)
@@ -64,10 +66,13 @@ function update() {
   
   var playerCell = positionToGridCell(playerX, playerY);
   var neighbors = gridNeighbors(playerCell)
+  playerColliding = false
   updateGrid(playerCell);
   for(var i = 0; i < neighbors.length; i++) {
     updateGrid(neighbors[i]);
   }
+  document.getElementById("x").innerHTML = Math.floor(playerX)
+  document.getElementById("y").innerHTML = Math.floor(playerY)
 }
 
 function updateGrid(cell) {
@@ -77,7 +82,6 @@ function updateGrid(cell) {
   }
 }
 function checkForCollisions(cell) {
-  playerColliding = false
   for(var i = 0; i < cell.planets.length; i++) {
     checkPlayerCollision(cell.planets[i]);
     for(var j = 0; j < cell.npcs.length; j++) {
@@ -114,6 +118,7 @@ function checkPlayerCollision(planet) {
     if(!orbitPlanet)
     {
       orbitPlanet = planet
+      console.log(planet.personality)
       var angleToPlanet = Math.atan2(dy, dx);
       if(angleToPlanet < playerAngle) orbitDirection = -1;
       else orbitDirection = 1;
