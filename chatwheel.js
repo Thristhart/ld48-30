@@ -158,7 +158,10 @@ function threatenClicked() {
     fear = 9;
   if(playerKills.length == 0) {
     orbitPlanet.message = threatenResponsesPassive[fear]
-    if(fear > 7) {
+    if(fear > 8) {
+      playerInventory.push(orbitPlanet.resource);
+    }
+    else if(fear > 7) {
       if(orbitPlanet.tradeOffer == 1)
         orbitPlanet.tradeOffer = 2;
       else if (orbitPlanet.tradeOffer == 2 && orbitPlanet.tradeDemand == 3) {
@@ -168,14 +171,14 @@ function threatenClicked() {
       else if (orbitPlanet.tradeOffer == 3 && orbitPlanet.tradeDemand == 2) {
         orbitPlanet.tradeDemand = 1;
       }
-    }
-    else if(fear > 8) {
-      playerInventory.push(orbitPlanet.resource);
     }
   }
   else {
     orbitPlanet.message = threatenResponsesKiller[fear]
-    if(fear > 4) {
+    if(fear > 6) {
+      playerInventory.push(orbitPlanet.resource);
+    }
+    else if(fear > 4) {
       if(orbitPlanet.tradeOffer == 1)
         orbitPlanet.tradeOffer = 2;
       else if (orbitPlanet.tradeOffer == 2 && orbitPlanet.tradeDemand == 3) {
@@ -185,9 +188,6 @@ function threatenClicked() {
       else if (orbitPlanet.tradeOffer == 3 && orbitPlanet.tradeDemand == 2) {
         orbitPlanet.tradeDemand = 1;
       }
-    }
-    else if(fear > 6) {
-      playerInventory.push(orbitPlanet.resource);
     }
   }
   orbitPlanet.beenThreatened = true;
@@ -222,7 +222,7 @@ var threatenResponsesPassive = ["Get the fuck out.",
                                 "You wouldn't hurt a fly.",
                                 "Hah! You're not that scary.",
                                 "You're not that kind of guy, bud. Go away.",
-                                "You don't have a reputation for being a jerk... yet.",
+                                "I've heard about you. You're can't scare me.",
                                 "Can't we just have peace?",
                                 "We don't deal with bullies!",
                                 "Please leave us alone!",
