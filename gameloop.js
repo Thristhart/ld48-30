@@ -178,7 +178,7 @@ function continueGame() {
   return false;
 }
 function restartGame() {
-  return true; // this will cause the form to submit, therefore refresh
+  window.location.reload();
 }
 
 function checkPlayerCollision(planet) {

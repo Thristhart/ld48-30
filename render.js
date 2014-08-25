@@ -12,8 +12,10 @@ var background = null
 
 var lastFrameTime = new Date().getTime()
 function render() {
-  if(pauseRender)
-    return
+  if(pauseRender) {
+    window.requestAnimationFrame(render);
+    return;
+  }
   update()
   clear()
   

@@ -113,7 +113,7 @@ function onMouseDown(event) {
   if(drawCursor) {
     fireWeapon();
   }
-  else if(orbitPlanet && selectedChat && !orbitPlanet.messageQueue && !orbitPlanet.dead && !orbitPlanet.beenThreatened) {
+  else if(orbitPlanet && selectedChat && !pauseRender && !orbitPlanet.messageQueue && !orbitPlanet.dead && !orbitPlanet.beenThreatened) {
     selectedChat.clicked()
   }
 }

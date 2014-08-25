@@ -3,7 +3,7 @@ var CHAT_WHEEL_ANGLE = Math.PI/2
 var CHAT_WHEEL_ARC = Math.PI/1.5
 var TIME_PER_MESSAGE = 4000
 function drawChatWheel() {
-  if(!orbitPlanet || drawCursor || orbitPlanet.dead || orbitPlanet.beenThreatened)
+  if(!orbitPlanet || pauseRender || drawCursor || orbitPlanet.dead || orbitPlanet.beenThreatened)
     return false;
   displayMenu()
   if(orbitPlanet.messageQueue) {
