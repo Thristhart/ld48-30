@@ -7,6 +7,7 @@ function onLoad(event) {
   registerInputEvents()
   
   document.getElementById("planetName").value = generatePlanetName()
+  document.getElementById("planetSearch").style.display = "none"
   background = document.getElementById("bg");
   
   cameraScale = 0.2
@@ -24,13 +25,14 @@ function buildStartingPlanet() {
   cameraY = playerHome.y
   
   playerHome.menu = MENU_HOME
-  quest = generateQuest(playerHome);
+  quest = generateQuest(playerHome, Math.round(document.getElementById("questCount").value));
   for(var i = 0; i < quest.length; i++) {
     var li = document.createElement("li");
     li.innerHTML = quest[i].name;
     li.className = "item_" + quest[i].name;
     document.getElementById("quest").appendChild(li);
   }
+  playerHome.message = "Any questions, captain?"
   
   document.getElementById("startingPlanet").style.visibility = "hidden"
   

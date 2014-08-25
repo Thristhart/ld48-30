@@ -1,16 +1,12 @@
 var cursorAngle = 0
 var MOUSE_DISTANCE_CAP = 100
+var waypointTarget = null;
 function onMouseMove(event) {
   if(hasPointerLock()) {
     var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0
     var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0
     screenMouseX += movementX * CAMERA_SPEED
     screenMouseY += movementY * CAMERA_SPEED
-    screenMouseDistance = Math.sqrt(screenMouseX * screenMouseX + screenMouseY * screenMouseY)
-    if(screenMouseDistance > MOUSE_DISTANCE_CAP) {
-      screenMouseX = screenMouseX / screenMouseDistance * MOUSE_DISTANCE_CAP;
-      screenMouseY = screenMouseY / screenMouseDistance * MOUSE_DISTANCE_CAP;
-    }
   }
   else
   {
@@ -20,6 +16,11 @@ function onMouseMove(event) {
     
     screenMouseX = event.clientX - rect.left - halfCanvas,
     screenMouseY = event.clientY - rect.top - halfCanvas
+  }
+  screenMouseDistance = Math.sqrt(screenMouseX * screenMouseX + screenMouseY * screenMouseY)
+  if(screenMouseDistance > MOUSE_DISTANCE_CAP) {
+    screenMouseX = screenMouseX / screenMouseDistance * MOUSE_DISTANCE_CAP;
+    screenMouseY = screenMouseY / screenMouseDistance * MOUSE_DISTANCE_CAP;
   }
   cursorAngle = Math.atan2(screenMouseY, screenMouseX)
 }
@@ -40,7 +41,22 @@ function onKeyDown(event) {
     case 69: // E (dvorak d)
       playerTurnThrust = 1
       break;
+    case 90:
+      if(playerWeapon)
+        drawCursor = true;
+      break;
+    case 70: // F
+      if(document.getElementById("planetSearch").style.display == "none") {
+        document.getElementById("planetSearch").style.display = "block";
+      }
+      document.exitPointerLock();
+      event.stopPropagation();
+      event.cancelBubble = false;
+      document.getElementById("searchName").focus();
+      justOpenedForm = true;
+      break;
   }
+  return false;
 }
 function onKeyUp(event) {
   switch(event.keyCode) {
@@ -58,7 +74,13 @@ function onKeyUp(event) {
     case 69: // E (dvorak d)
       if(playerTurnThrust == 1) playerTurnThrust = 0
       break;
+    case 90:
+      drawCursor = false;
+      event.stopPropagation();
+      event.cancelBubble = false;
+      break;
   }
+  return false;
 }
 
 function hasPointerLock() {
@@ -86,10 +108,21 @@ function translateMousePosition(x, y) {
 
 
 function onMouseDown(event) {
-  if(!hasPointerLock())
-    canvas.requestPointerLock()
-  if(orbitPlanet && selectedChat && !orbitPlanet.messageQueue) {
+  if(!hasPointerLock() && playerHome)
+    return canvas.requestPointerLock();
+  if(drawCursor) {
+    fireWeapon();
+  }
+  else if(orbitPlanet && selectedChat && !orbitPlanet.messageQueue && !orbitPlanet.dead && !orbitPlanet.beenThreatened) {
     selectedChat.clicked()
+  }
+}
+
+var justOpenedForm = false;
+function onInputChange(event) {
+  if(justOpenedForm) {
+    event.target.value = event.target.value.substr(0, event.target.value.length - 1);
+    justOpenedForm = false;
   }
 }
 
@@ -99,8 +132,13 @@ function registerInputEvents() {
   document.body.addEventListener("keydown", onKeyDown);
   document.body.addEventListener("keyup", onKeyUp);
   
+  document.getElementById("searchName").addEventListener("input", onInputChange);
+  
   // standard requestPointerLock shim
   canvas.requestPointerLock = canvas.requestPointerLock ||
                             canvas.mozRequestPointerLock ||
                             canvas.webkitRequestPointerLock;
+  document.exitPointerLock = document.exitPointerLock    ||
+                           document.mozExitPointerLock ||
+                           document.webkitExitPointerLock;
 }

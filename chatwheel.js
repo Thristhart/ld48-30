@@ -3,7 +3,7 @@ var CHAT_WHEEL_ANGLE = Math.PI/2
 var CHAT_WHEEL_ARC = Math.PI/1.5
 var TIME_PER_MESSAGE = 4000
 function drawChatWheel() {
-  if(!orbitPlanet)
+  if(!orbitPlanet || drawCursor || orbitPlanet.dead || orbitPlanet.beenThreatened)
     return false;
   displayMenu()
   if(orbitPlanet.messageQueue) {
@@ -84,7 +84,6 @@ function displayMenu() {
     chatWheelRight = {display: "gossip", clicked: gossipClicked}
   }
   if(orbitPlanet.menu == MENU_HOME) {
-    orbitPlanet.message = "Welcome home!"
     chatWheelLeft = {display: "trading", clicked: explainTrading}
     chatWheelMid = {display: "weapons", clicked: explainWeapons}
     chatWheelRight = {display: "piloting", clicked: explainControls}
@@ -126,19 +125,25 @@ function makeTradeHappen() {
   orbitPlanet.menu = MENU_HELLO;
   displayMenu();
   updateInventory();
+  orbitPlanet.doneTrade = true
 }
 function explainTrading() {
   orbitPlanet.messageQueue = ["All worlds are connected by trade.",
-                              "Some planets have certain resources",
-                              "but not enough of others",
-                              "take advantage of this to make a profit",
-                              "when you leave here we'll give you " + orbitPlanet.resource.name]
+                              "Some planets have certain resources, but not enough of others.",
+                              "Take advantage of this to make a profit!",
+                              "When you leave here we'll give you a unit of " + orbitPlanet.resource.name + " to get you going.",
+                              "Come back for more if you run out."]
 }
 function explainWeapons() {
-  orbitPlanet.messageQueue = ["idk lol shoot them", "nerd"]
+  orbitPlanet.messageQueue = ["As long as you have weapons in your inventory, you can fire them by pressing Z.",
+                              "An aiming reticule will appear as long as you hold Z, and you can click to fire.", 
+                              "Weapons are one-time use, and will disappear from your inventory when used.", 
+                              "Destroying planets will give you a violent reputation. Planets will be more easily threatened,",
+                              "but also more reluctant to talk to you.",
+                              ]
 }
 function explainControls() {
-  orbitPlanet.messageQueue = ["Thrust forward with \nW, up arrow or ,", "Rotate with A/D, left/right\nor A/E"]
+  orbitPlanet.messageQueue = ["Thrust forward with W, up arrow or ,", "Rotate with A/D, left/right or A/E"]
 }
 function tradeClicked() {
   orbitPlanet.message = "We will offer " + orbitPlanet.tradeOffer + " " + orbitPlanet.resource.name + " for " + orbitPlanet.tradeDemand + " " + orbitPlanet.want.name
@@ -146,8 +151,93 @@ function tradeClicked() {
   displayMenu()
 }
 function threatenClicked() {
-  orbitPlanet.message = "lol plz"
+  var fear = 9 + playerKills.length - orbitPlanet.personality.aggression;
+  if(playerWeapon)
+    fear += 3;
+  if(fear > 9)
+    fear = 9;
+  if(playerKills.length == 0) {
+    orbitPlanet.message = threatenResponsesPassive[fear]
+    if(fear > 7) {
+      if(orbitPlanet.tradeOffer == 1)
+        orbitPlanet.tradeOffer = 2;
+      else if (orbitPlanet.tradeOffer == 2 && orbitPlanet.tradeDemand == 3) {
+        orbitPlanet.tradeOffer = 3;
+        orbitPlanet.tradeDemand = 2;
+      }
+      else if (orbitPlanet.tradeOffer == 3 && orbitPlanet.tradeDemand == 2) {
+        orbitPlanet.tradeDemand = 1;
+      }
+    }
+    else if(fear > 8) {
+      playerInventory.push(orbitPlanet.resource);
+    }
+  }
+  else {
+    orbitPlanet.message = threatenResponsesKiller[fear]
+    if(fear > 4) {
+      if(orbitPlanet.tradeOffer == 1)
+        orbitPlanet.tradeOffer = 2;
+      else if (orbitPlanet.tradeOffer == 2 && orbitPlanet.tradeDemand == 3) {
+        orbitPlanet.tradeOffer = 3;
+        orbitPlanet.tradeDemand = 2;
+      }
+      else if (orbitPlanet.tradeOffer == 3 && orbitPlanet.tradeDemand == 2) {
+        orbitPlanet.tradeDemand = 1;
+      }
+    }
+    else if(fear > 6) {
+      playerInventory.push(orbitPlanet.resource);
+    }
+  }
+  orbitPlanet.beenThreatened = true;
+  updateInventory();
 }
+var hellos = ["...",
+              "Oh great, it's you.",
+              "What do you want?",
+              "Hello.",
+              "Hi.",
+              "Hello!",
+              "Hi!",
+              "Welcome, friend!",
+              "Hello friend!",
+              "Hi friend!"]
+function getPlanetHello(planet) {
+  if(planet == playerHome)
+    return "Welcome home!";
+  var happiness_to_see_you = planet.personality.friendliness - playerKills.length * 2;
+  if(planet.beenThreatened)
+    happiness_to_see_you -= 3;
+  if(planet.doneTrade)
+    happiness_to_see_you += 1;
+  if(happiness_to_see_you < 0)
+    happiness_to_see_you = 0;
+  if(happiness_to_see_you > 9)
+    happiness_to_see_you = 9;
+    
+  return hellos[happiness_to_see_you];
+}
+var threatenResponsesPassive = ["Get the fuck out.",
+                                "You wouldn't hurt a fly.",
+                                "Hah! You're not that scary.",
+                                "You're not that kind of guy, bud. Go away.",
+                                "You don't have a reputation for being a jerk... yet.",
+                                "Can't we just have peace?",
+                                "We don't deal with bullies!",
+                                "Please leave us alone!",
+                                "Oh god, we'll improve our prices! Just don't hurt us!",
+                                "Just take it and leave us alone!"]
+var threatenResponsesKiller = ["You think you're tough? You don't scare me.",
+                               "Give someone a weapon and they think they're all that.",
+                               "Get out of here.",
+                               "You're not cut out for this, bud.",
+                               "Look, we don't want any trouble. Go away.",
+                               "Please stop! Fine! We'll lower our prices.",
+                               "No! Please! We'll lower our prices! Don't hurt us!",
+                               "Oh god, no! Take this and leave us alone!",
+                               "Oh god, please! No! Don't hurt us! Take everything we've got!",
+                               "Oh god, not again! Fine! Take these!"]
 
 var gossipBrushoffs = ["Fuck off.",
                        "That's all you're getting out of me.",
@@ -161,8 +251,8 @@ var gossipBrushoffs = ["Fuck off.",
                        "I'm sorry! That was the last one I knew."]
 function gossipClicked() {
   orbitPlanet.gossipCount++
-  if(orbitPlanet.gossipCount > orbitPlanet.personality.friendliness) {
-    var annoyanceIndex = orbitPlanet.personality.friendliness - (orbitPlanet.gossipCount - orbitPlanet.personality.friendliness)
+  if(orbitPlanet.gossipCount > orbitPlanet.personality.friendliness - playerKills.length) {
+    var annoyanceIndex = orbitPlanet.personality.friendliness - (orbitPlanet.gossipCount - orbitPlanet.personality.friendliness) - playerKills.length
     if(annoyanceIndex < 0) annoyanceIndex = 0
     orbitPlanet.message = gossipBrushoffs[annoyanceIndex]
   }
@@ -192,7 +282,7 @@ var wealthGossip =      ["%planet is so poor right now. They've got nothing left
                         "%planet is where the smart traders go to make deals.",
                         "I hear %planet is so wealthy, they've giving stuff away just to get rid of it!",
                         "%planet is definitely the wealthiest world around here."]
-var friendlinessGossip = ["%planet is a hive of scum and villainy. No one wants to talk!",
+var friendlinessGossip = ["%planet is full of angry people. No one wants to talk!",
                           "%name from %planet is a real sour grape.",
                           "%planet is getting a reputation for being full of jerks!",
                           "There must be something in the air at %planet. They're all pretty mean there.",
@@ -238,6 +328,7 @@ function generateGossip(planet) {
   for(var i = 0; i < neighbors.length; i++) {
     topicPlanets = topicPlanets.concat(neighbors[i].planets);
   }
+  console.log(topicPlanets);
   var topicPlanet = selectA(topicPlanets);
   var topic = selectA(gossipTopics);
   var line = ""
@@ -301,7 +392,9 @@ function generateHumanName(planet) {
   return name;
 }
 function selectBySeed(array, seed) {
-  return array[Math.abs(Math.floor(seed) % array.length)];
+  var obj = array[Math.abs(Math.floor(seed) % array.length)];
+  if(!obj) console.log(array, seed, obj);
+  return obj
 }
 
 function replaceChar(string, newChar, index) {

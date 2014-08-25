@@ -1,6 +1,7 @@
 body {
   background-color: #2C3844;
   margin: 0;
+  overflow: hidden;
 }
 #display {
   background-color: black;
@@ -18,10 +19,39 @@ body {
   border-radius: 5em;
   border: 3px solid #FF4200;
 }
+
+#victory {
+  position: absolute;
+  width: 15em;
+  height: 15em;
+  top: calc(50% - 7.5em);
+  left: calc(50% - 7.5em);
+  text-align: center;
+  display: none;
+}
 #bg {
   display: none;
 }
 #status {
+  left: calc(50% + 256px + 1.63em);
+  position: absolute;
+  top: calc(128px + 4.2em);
+  background-color: white;
+  width: 8em;
+  height: 2.1em;
+  background-color: #C7CBD1;
+  color: #2C3844;
+  text-align: center;
+  display: block;
+}
+#status::before {
+  content: "Waypoint target: ";
+}
+
+#targetPlanet {
+  width: 100%;
+}
+#coords {
   font-family: Monospace;
 }
 #seperator,#x,#y {
@@ -66,6 +96,7 @@ body {
   text-align: center;
   width: 100%;
   display: block;
+  margin-top: 0.3em;
 }
 
 #inventory li, #quest li {
@@ -85,11 +116,48 @@ body {
   list-style-type: none;
   height: 15em;
 }
-#quest, #inventory {
+
+#weapon_status {
+  position: absolute;
+  right: calc(50% + 256px + 2em);
+  top: 18em;
+  width: 6.5em;
+  
+  padding: 0;
+  height: 6em;
+  
+  text-align: center;
+}
+#weapon_status::before {
+  content: "WEAPONS";
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+.cooldown {
+
+}
+.ready::after {
+  content: "Press Z to fire"
+}
+
+.panel {
   background-color: #C7CBD1;
   color: #2C3844;
   border-radius: 1em;
   padding-top: 0.5em;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.panel::-webkit-scrollbar {
+  background-color: rgba(0, 0, 0, 0);
+  width: 0.5em;
+}
+.panel::-webkit-scrollbar-thumb {
+  background-color: #2C3844;
+  border-radius: 2em;
+  height: 4em;
 }
 #quest::before {
   content: "QUEST";
@@ -99,13 +167,36 @@ body {
   display: block;
 }
 
+#planetSearch {
+  display: none;
+  position: absolute;
+  left: calc(50% - 7em);
+  top: calc(256px - 3em);
+  width: 10em;
+  color: white;
+  background-color: #C7CBD1;
+  padding: 2em;
+}
+
 #startingPlanet {
   position: absolute;
-  left: calc(50% - 5em);
-  top: 256px;
+  left: calc(50% - 7em);
+  top: calc(256px - 3em);
   width: 10em;
+  color: #2C3844;
+  background-color: #C7CBD1;
+  padding: 2em;
+}
+#startingPlanet label {
+  float: left;
 }
 #startingPlanet::before {
   content: "Name your homeworld: ";
-  color: white;
+}
+#startingPlanet input {
+  float: left;
+}
+#questCount {
+  width: 5em;
+  clear: left;
 }

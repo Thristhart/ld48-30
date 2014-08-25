@@ -17,25 +17,41 @@
     <form id="startingPlanet" onsubmit="return buildStartingPlanet()" onreset="planetName.value = generatePlanetName(); return false">
       <input id="planetName" value="Test" autofocus />
       <input id="reroll" value="Reroll" type="reset" />
+      <label>Quest count (more is harder): </label><input id="questCount" value=3 type="number" />
       <input id="go" value="Start" type="submit" />
     </form>
+    <form id="planetSearch" onsubmit="return searchForPlanet()" onreset="return clearWaypoint()">
+      <input id="searchName" list="planetnames"/>
+      <input type="submit" value="Set waypoint"/>
+      <input type="reset" value="Clear waypoint"/>
+    </form>
+    <form id="victory" class="panel" onsubmit="return continueGame()" onreset="return restartGame()">
+      <h1>Victory!</h1>
+      <p id="victoryMessage"></p>
+      <input id="continue" value="Continue" type="submit" />
+      <input id="restart" value="Restart" type="reset" />
+    </form>
+    <datalist id="planetnames">    
+    </datalist>
     <canvas id="display" width=512 height=512>
       
     </canvas>
-    <ul id="inventory">
+    <ul id="inventory" class="panel">
       
     </ul>
     <canvas id="minimap" width=128 height=128>
     </canvas>
+    <span id="coords">
+      <span id="seperator">,</span>
+      <span id="x">0</span>
+      <span id="y">0</span>
+    </span>
     <div id="status">
-      <span id="coords">
-        <span id="seperator">,</span>
-        <span id="x">0</span>
-        <span id="y">0</span>
-      </span>
+      <span id="targetPlanet"></span>
     </div>
-    <ul id="quest">
-      
-    </ul>
+    <div id="weapon_status" class="panel">
+      <p id="cooldown">NONE</p>
+    </div>
+    <ul id="quest" class="panel"></ul>
   </body>
 </html>

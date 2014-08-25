@@ -17,7 +17,13 @@ var orbitAngle = null;
 var orbitGraduator = 30;
 var orbitDirection = 1;
 var playerInventory = [];
+var playerHome = null
+var playerWeapon = null;
+var weaponCooldown = 0;
+var weaponMaxCooldown = 10;
+var weaponFiredTime = 0;
 var quest;
+var playerKills = [];
 
 var VELOCITY_CAP = 5
 function updatePlayer() {
@@ -101,7 +107,7 @@ function playerHasResource(res, count) {
 }
 
 function playerLeftOrbit() {
-  if(orbitPlanet == playerHome) {
+  if(orbitPlanet == playerHome && !orbitPlanet.dead) {
     if(!playerHasResource(playerHome.resource)) {
       playerInventory.push(playerHome.resource);
       updateInventory();

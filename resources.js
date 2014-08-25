@@ -70,10 +70,10 @@ function getPlanetDesiredResource(planet) {
   var index = Math.abs(planet.personality.hash) % resArray.length
   return resources[resArray[index]]
 }
-function generateQuest(planet) {
+function generateQuest(planet, count) {
   var goals = []
   var rtypes = Object.keys(resources)
-  for(var i = 0; i < 3; i++) {
+  for(var i = 0; i < count; i++) {
     var type = selectBySeed(rtypes, planet.personality.hash << i)
     goals.push(resources[type]);
   }

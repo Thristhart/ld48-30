@@ -15,6 +15,7 @@ function buildNPC(x, y) {
   npc.grid.npcs.push(npc)
   npcs.push(npc)
   
+  return npc;
 }
 function updateNPC(npc) {
   if(npc.orbitPlanet) {

@@ -3,10 +3,14 @@ function addPlanet(x, y, name) {
   var planet = {x:x, y:y, radius: 0}
   planet.message = "Hello!"
   planet.menu = MENU_HELLO
+  planet.holes = []
   if(name)
     planet.name = name
   else
-    planet.name = generatePlanetName()
+    planet.name = generatePlanetName(x, y)
+    
+  var p = findPlanet(name);
+  if(p) return p;
   
   planet.personality = {}
   planet.personality.hash = hashString(planet.name)
@@ -45,12 +49,18 @@ function addPlanet(x, y, name) {
   }
   planet.gossipCount = 0;
   
-  planet.type = "industrial"
+  planet.type = selectBySeed(planetTypes, planet.personality.hash)
   
-  if(planet.personality.friendliness > 7 || planet.personality.aggression > 7 || planet.personality.wealth > 7)
-    buildNPC(planet.x - planet.personality.friendliness, planet.y)
+  if(planet.personality.friendliness > 7 || planet.personality.aggression > 7 || planet.personality.wealth > 7) {
+    var npc = buildNPC(planet.x - planet.personality.friendliness, planet.y)
+    npc.goal = planet;
+  }
   
   planets.push(planet)
+  var d = document.getElementById("planetnames");
+  var option = document.createElement("option");
+  option.value = planet.name;
+  d.appendChild(option)
   return planet
 }
 // fuck it
@@ -58,24 +68,75 @@ Number.prototype.clamp = function(min, max) {
   return Math.min(Math.max(this, min), max);
 };
 
-function generatePlanetName() {
+function findPlanet(name) {
+  for(var i = 0; i < planets.length; i++) {
+    if(planets[i].name == name)
+      return planets[i];
+  }
+}
+function searchForPlanet() {
+  var targetName = document.getElementById("searchName").value;
+  var p = findPlanet(targetName);
+  if(p) {
+    waypointTarget = p;
+    document.getElementById("targetPlanet").innerHTML = p.name;
+  }
+  document.getElementById("planetSearch").style.display = "none";
+  return false;
+}
+function clearWaypoint() {
+  waypointTarget = null;
+  document.getElementById("planetSearch").style.display = "none";
+  document.getElementById("targetPlanet").innerHTML = ""
+}
+
+function generatePlanetName(x, y) {
   var titles = ["Empire", "Republic", "Land", "World", "Hub"]
   var adjectives = ["Alpha", "Beta", "Gamma", "Omega", "Prime", "Ver", "Dar", "New", "Great", "Greater", "Old", "Lesser", "Small", "Holy", "Dwarf"]
   var prefixes = ["Andro", "Ev", "Raz", "Zyr", "Ho", "Ad", "Ab", "Ala", "Ari", "Lat", "Kal", "Heg", "Syn", "Gar", "Arra", "Robo", "Siri", "Plut", "Satu", "Neptu", "Mercu", "Jupi", "Terr", "Termi", "Trant", "Cala", "Tato", "Sar", "Hac", "Sah", "Rev", "Vor", "As", "Ath", "Demi", "Bel", "Hal", "Jen"]
   var suffixes = ["meda", "zle", "yar", "yos", "dos", "ora", "zon", "mak", "ona", "ia", "arr", "ganda", "world", "dan", "van", "us", "y", "u", "o", "e", "a", "i", "ar", "rn", "ne", "oine", "ine", "ry", "iter", "nus", "fia", "or", "land", "gar", "alus", "lon", "th"]
   
+  var seed;
+  if(playerHome)
+    seed = playerHome.personality.hash;
+  else
+    seed = Math.random() * 10000;
+  var startingSeed = seed;
+  
+  if(x) {
+    seed += x * y;
+  }
+  
   var name = ""
-  var title_rand = Math.random() * 10
-  var adj_rand = Math.random() * 10
+  var title_rand = generator(seed) * 10
+  seed *= generator(seed) * 2;
+  if(isNaN(seed))
+    seed = startingSeed;
+  var adj_rand = generator(seed) * 10
+  seed *= generator(seed) * 2;
+  if(isNaN(seed))
+    seed = startingSeed;
   
   if(title_rand > 8)
-    name += "The " + selectA(titles) + " of "
+    name += "The " + selectBySeed(titles, seed) + " of "
+  seed *= generator(seed) * 2
+  if(isNaN(seed))
+    seed = startingSeed;
   if(adj_rand > 9)
-    name += selectA(adjectives) + " "
+    name += selectBySeed(adjectives, seed) + " "
+  seed *= generator(seed) * 2
+  if(isNaN(seed))
+    seed = startingSeed;
   if(adj_rand > 8)
-    name += selectA(adjectives) + " "
-  name += selectA(prefixes)
-  name += selectA(suffixes)
+    name += selectBySeed(adjectives, seed) + " "
+  seed *= generator(seed) * 2
+  if(isNaN(seed))
+    seed = startingSeed;
+  name += selectBySeed(prefixes, seed)
+  seed *= generator(seed) * 2
+  if(isNaN(seed))
+    seed = startingSeed;
+  name += selectBySeed(suffixes, seed)
   
   return name
 }
@@ -153,9 +214,14 @@ function generatePlanetsInCell(cell) {
   }
   var planetCount = Math.ceil(Math.random() * GRID_CELL_MAX_PLANETS)
   for(var i = 0; i < planetCount; i++) {
-    var p = addPlanet(cell.x + Math.random() * GRID_CELL_SIZE,
-                      cell.y + Math.random() * GRID_CELL_SIZE)
+    var p = addPlanet(cell.x + generator(playerHome.personality.hash + cell.x * cell.y) * GRID_CELL_SIZE,
+                      cell.y + generator(playerHome.personality.hash + generator(cell.x * cell.y) * GRID_CELL_SIZE) * GRID_CELL_SIZE)
     checkPlanetForCollision(p)
     cell.planets.push(p)
   }
+}
+// random-seeming number generator
+function generator(seed) {
+  var base = Math.sin(seed) * 1000;
+  return base - Math.floor(base);
 }

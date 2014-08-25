@@ -12,15 +12,12 @@ var background = null
 
 var lastFrameTime = new Date().getTime()
 function render() {
+  if(pauseRender)
+    return
   update()
   clear()
   
-  // save at default position/scaling
-  context.save()
-
-  context.translate(halfCanvas - cameraX * cameraScale,
-                    halfCanvas - cameraY * cameraScale)
-  context.scale(cameraScale, cameraScale);
+  scaleAndTransform();
   
   
   // draw stuff
@@ -33,7 +30,7 @@ function render() {
   for(var i = 0; i < neighbors.length; i++) {
     drawGrid(neighbors[i]);
   }
-  if(orbitPlanet) {
+  if(orbitPlanet && !orbitPlanet.dead) {
     drawDialog(orbitPlanet.message, 
               orbitPlanet.x - orbitPlanet.radius * 0.7,
               orbitPlanet.y + orbitPlanet.radius * 0.7,
@@ -41,22 +38,47 @@ function render() {
                width: orbitPlanet.radius/3,
                height: orbitPlanet.radius/4,})
   }
+  
+  if(missileOut)
+    drawMissile();
   if(drawCursor)
     drawAimingCursor();
   drawPlayer();
   drawChatWheel()
   
   
-  if(playerInventory.length == 0) {
+  if(playerInventory.length == 0 && orbitPlanet && orbitPlanet != playerHome) {
     drawDialog("I've run out of resources! I should head home for more.", 
               playerX, playerY,{font: "Segoe UI",
-               width: (playerHeight * 4) / cameraScale,
-               height: (playerHeight * 4) / cameraScale});
+               width: orbitPlanet.radius/3,
+               height: orbitPlanet.radius/4});
   }
   
   // reset translations and scaling
   context.restore()
+  if(waypointTarget == orbitPlanet) {
+    waypointTarget = null;
+    document.getElementById("targetPlanet").innerHTML = ""
+  }
+  if(waypointTarget) {
+    var angle = Math.atan2(waypointTarget.y - cameraY,  waypointTarget.x - cameraX);
+    var angleX = 64 * Math.cos(angle) + 64;
+    var angleY = 64 * Math.sin(angle)+ 64;
+    var leftX = 56 * Math.cos(angle - 0.3)+ 64;
+    var leftY = 56 * Math.sin(angle - 0.3)+ 64;
+    var rightX = 56 * Math.cos(angle + 0.3)+ 64;
+    var rightY = 56 * Math.sin(angle + 0.3)+ 64;
+    console.log(angle, leftX, angleX, rightX);
+    minimapContext.beginPath();
+    minimapContext.moveTo(leftX, leftY);
+    minimapContext.lineTo(angleX, angleY);
+    minimapContext.lineTo(rightX, rightY);
+    minimapContext.closePath();
+    minimapContext.fillStyle = "#FF4200";
+    minimapContext.fill();
+  }
   
+  updateWeaponStatus();
   
   var nowTime = new Date().getTime()
   var fps = 1000/(nowTime - lastFrameTime);
@@ -64,11 +86,64 @@ function render() {
   context.fillStyle = "white";
   context.fillText(fps, halfCanvas * 2 - 20, 20);
   lastFrameTime = new Date().getTime();
-  if(pauseRender)
-    return
-  else
-    window.requestAnimationFrame(render);
+  window.requestAnimationFrame(render);
 }
+
+function updateWeaponStatus() {
+  var status = document.getElementById("weapon_status")
+  var cd = document.getElementById("cooldown")
+  if(playerWeapon) {
+    if(weaponCooldown) {
+      cd.innerHTML = weaponCooldown;
+      status.className = "panel cooldown";
+    }
+    else {
+      cd.innerHTML = "READY";
+      status.className = "panel ready";
+    }
+  }
+  else {
+    cd.innerHTML = "NONE"
+    status.className = "panel none";
+  }
+}
+
+function scaleAndTransform() {
+  // save at default position/scaling
+  context.save()
+
+  context.translate(halfCanvas - cameraX * cameraScale,
+                    halfCanvas - cameraY * cameraScale)
+  context.scale(cameraScale, cameraScale);
+}
+
+function drawMissile() {
+  var topLeft = pointInRect(missileX, missileY, missileAngle, 5, 3, 0, 0)
+  var topRight = pointInRect(missileX, missileY, missileAngle, 5, 3, 1, 0)
+  var botLeft = pointInRect(missileX, missileY, missileAngle, 5, 3, 0, 1)
+  var botRight = pointInRect(missileX, missileY, missileAngle, 5, 3, 1, 1)
+  
+  // draw rectangular shape
+  context.fillStyle = "#C7CBD1";
+  context.strokeStyle = "#C7CBD1";
+  context.beginPath()
+  context.moveTo(topLeft.x, topLeft.y)
+  context.lineTo(topRight.x, topRight.y)
+  context.lineTo(botRight.x, botRight.y)
+  context.lineTo(botLeft.x, botLeft.y)
+  context.closePath()
+  context.stroke()
+  context.fill()
+    
+  context.beginPath()
+  context.moveTo(botLeft.x, botLeft.y)
+  context.lineTo(missileX - Math.cos(missileAngle) * 2, missileY - Math.sin(missileAngle) * 2)
+  context.lineTo(topLeft.x, topLeft.y)
+  context.closePath()
+  context.fillStyle = "red"
+  context.fill()
+}
+
 
 function updateInventory() {
   var inv_dom = document.getElementById("inventory")
@@ -91,7 +166,7 @@ function drawGrid(cell) {
 }
 
 function drawAimingCursor() {
-  
+  /*
   var cursor_width = 0.5
   var cursor_radius = 0.7
   var pointer_radius = 0.9
@@ -110,7 +185,27 @@ function drawAimingCursor() {
   context.moveTo(playerX, playerY)
   context.closePath()
   context.fillStyle = "#cbfffd"
-  context.fill()
+  context.fill()*/
+  var x = playerX + screenMouseX
+  var y = playerY + screenMouseY
+  context.strokeStyle = "#FF4200";
+  context.beginPath();
+  context.arc(x, y, 20, 0, Math.PI * 2);
+  context.stroke();
+  context.beginPath();
+  context.arc(x, y, 15, 0, Math.PI * 2);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(x-12, y);
+  context.lineTo(x+12, y);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(x, y-12);
+  context.lineTo(x, y+12);
+  context.stroke();
+  
+  c
+  
 }
 function drawPlayer() {
   var topLeft = pointInRect(playerX, playerY, playerAngle, playerHeight, playerWidth, 0, 0)
@@ -322,7 +417,7 @@ function drawPlanet(planet) {
   context.fillStyle = "white";
   context.stroke()
   
-  if(orbitPlanet == planet) {
+  if(orbitPlanet == planet && !orbitPlanet.dead) {
     context.moveTo(topaX, topaY)
     var waves_angle = antenna_angle + Math.PI / 2
     context.beginPath()
@@ -391,10 +486,90 @@ function drawPlanet(planet) {
     context.arc(smokeMiddleTop.x, smokeMiddleTop.y, planet.radius / 40, factory_angle, factory_angle + Math.PI, false)
     context.stroke()
   }
+  if(planet.type == "labor") {
+    var factory_angle = planet.personality.flavor_angle
+    var factory_x = planet.x + Math.cos(factory_angle) * planet.radius * 1.1
+    var factory_y = planet.y + Math.sin(factory_angle) * planet.radius * 1.1
+    var factory_width = planet.radius / 5
+    var factory_height = planet.radius / 8
+    var topLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, 0)
+    var topRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 1, 0)
+    var botLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, 1)
+    var botRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 1, 1)
+    var smokestackLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, -0.5)
+    var smokestackRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.2, -0.5)
+    var smokestackBotRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.2, 0)
+    
+    var smokeLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, -0.1, -1)
+    var smokeMiddle = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.15, -0.7)
+    var smokeMiddleTop = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.14, -1.3)
+    var smokeRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.1, -1.5)
+    var smokeMiddleTopmost = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, -0.1, -1.5)
+    
+    context.beginPath()
+    context.moveTo(topLeft.x, topLeft.y);
+    context.lineTo(topRight.x, topRight.y);
+    context.lineTo(botRight.x, botRight.y);
+    context.lineTo(botLeft.x, botLeft.y);
+    context.closePath()
+    context.fill()
+  }
+  if(planet.type == "luxury") {
+    var factory_angle = planet.personality.flavor_angle
+    var factory_x = planet.x + Math.cos(factory_angle) * planet.radius * 1.1
+    var factory_y = planet.y + Math.sin(factory_angle) * planet.radius * 1.1
+    var factory_width = planet.radius / 5
+    var factory_height = planet.radius / 8
+    var topLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, 0)
+    var topRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 1, 0)
+    var botLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, 1)
+    var botRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 1, 1)
+    var smokestackLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0, -0.5)
+    var smokestackRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.2, -0.5)
+    var smokestackBotRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.2, 0)
+    
+    var smokeLeft = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, -0.1, -1)
+    var smokeMiddle = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.15, -0.7)
+    var smokeMiddleTop = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.14, -1.3)
+    var smokeRight = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, 0.1, -1.5)
+    var smokeMiddleTopmost = pointInRect(factory_x, factory_y, factory_angle + Math.PI / 2, factory_height, factory_width, -0.1, -1.5)
+    
+    context.beginPath()
+    context.moveTo(planet.x + Math.cos(factory_angle) * planet.radius * 1.3, planet.y + Math.sin(factory_angle) * planet.radius * 1.3);
+    context.lineTo(botRight.x, botRight.y);
+    context.lineTo(botLeft.x, botLeft.y);
+    context.closePath()
+    context.fill()
+  }
   
-  context.font = 20 / cameraScale + "pt Arial"
-  var width = context.measureText(planet.name).width
-  context.fillText(planet.name, planet.x - width / 2, planet.y);  
+  if(!planet.dead) {
+    context.font = 20 / cameraScale + "pt Arial"
+    var width = context.measureText(planet.name).width
+    context.fillText(planet.name, planet.x - width / 2, planet.y);  
+  }
+  drawPlanetHoles(planet);
+}
+function drawPlanetHoles(planet) {
+  context.restore();
+  for(var i = 0; i < planet.holes.length; i++) {
+    scaleAndTransform();
+    var h = planet.holes[i];
+    context.beginPath();
+    context.moveTo(h.x, h.y);
+    context.arc(h.x, h.y, h.radius, 0, Math.PI*2);
+    context.clip();
+    
+    var pCell = positionToGridCell(playerX, playerY);
+    var neighbors = gridNeighbors(pCell).concat(pCell)
+    for(var j = 0; j < neighbors.length; j++) {
+      var cell = neighbors[j];
+      context.drawImage(background, cell.x, cell.y, GRID_CELL_SIZE, GRID_CELL_SIZE); 
+    }
+    
+    // todo: make hole in minimap?
+    context.restore();
+  }
+  scaleAndTransform();
 }
 
 function clear() {
